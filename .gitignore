@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+
+# Database & logs
+*.db
+*.evtx
+
+# Excel reports & charts
+reports/*.xlsx
+reports/charts/
+
+# OS
+.DS_Store
