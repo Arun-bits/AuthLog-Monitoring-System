@@ -1,33 +1,49 @@
 # src/log_collector.py
 
 import win32evtlog
-from src.config import (
-    EVENT_LOG_SERVER,
-    EVENT_LOG_TYPE,
-    SUCCESS_LOGIN_EVENT_ID,
-    FAILED_LOGIN_EVENT_ID,
-    MACHINE_ID
-)
+import win32evtlogutil
+import socket
+from datetime import datetime
 
-_last_record_number = None  # global state
+# Windows Security log constants (OS-level, not config-level)
+EVENT_LOG_SERVER = None
+EVENT_LOG_TYPE = "Security"
+
+TRACKED_EVENT_IDS = {
+    4624,  # Successful logon
+    4625,  # Failed logon
+    4740,  # Account lockout
+    4720,  # User created
+    4726,  # User deleted
+    4672   # Special privileges
+}
 
 
 def collect_authentication_logs():
-    handle = win32evtlog.OpenEventLog(EVENT_LOG_SERVER, EVENT_LOG_TYPE)
+    print("[INFO] Authentication Log Collector Started")
+
+    server = EVENT_LOG_SERVER
+    log_type = EVENT_LOG_TYPE
+    machine_name = socket.gethostname()
+
+    handle = win32evtlog.OpenEventLog(server, log_type)
     flags = win32evtlog.EVENTLOG_BACKWARDS_READ | win32evtlog.EVENTLOG_SEQUENTIAL_READ
 
     events = win32evtlog.ReadEventLog(handle, flags, 0)
-    collected_events = []
 
-    if events:
-        for event in events[:5]:  # show only latest 5
-            collected_events.append({
-                "event_id": event.EventID,
-                "timestamp": event.TimeGenerated.Format(),
-                "machine_id": MACHINE_ID,
-                "event_type": "RAW",
-                "raw_event": event
-            })
+    collected = []
 
-    win32evtlog.CloseEventLog(handle)
-    return collected_events
+    for event in events:
+        if event.EventID not in TRACKED_EVENT_IDS:
+            continue
+
+        record = {
+            "time": event.TimeGenerated.Format(),
+            "machine": machine_name,
+            "user": event.StringInserts[1] if event.StringInserts else "UNKNOWN",
+            "event_id": event.EventID
+        }
+
+        collected.append(record)
+
+    return collected

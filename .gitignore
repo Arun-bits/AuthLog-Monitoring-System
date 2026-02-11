@@ -13,3 +13,8 @@ reports/charts/
 
 # OS
 .DS_Store
+# Generated data
+processed/*.csv
+
+# Excel files
+*.xlsx

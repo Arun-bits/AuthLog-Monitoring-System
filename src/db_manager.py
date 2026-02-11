@@ -1,56 +1,62 @@
 # src/db_manager.py
 
 import sqlite3
-from pathlib import Path
-
-DB_PATH = Path("database/auth_logs.db")
-SCHEMA_PATH = Path("database/schema.sql")
-
-
-def get_connection():
-    return sqlite3.connect(DB_PATH)
+from src.config import DB_PATH
 
 
 def initialize_database():
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    with open(SCHEMA_PATH, "r") as f:
-        schema_sql = f.read()
-
-    cursor.executescript(schema_sql)
-    conn.commit()
-    conn.close()
-
-
-def insert_event(event):
-    conn = get_connection()
+    """
+    Ensures the database and tables exist.
+    """
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
     cursor.execute("""
-        INSERT INTO auth_events (
-            event_time,
-            event_id,
-            event_category,
-            username,
-            logon_type,
-            status,
-            machine_id
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)
-    """, (
-        event["timestamp"].isoformat(),
-        event["event_id"],
-        event["event_category"],
-        event.get("username"),
-        event.get("logon_type"),
-        event.get("status"),
-        event.get("machine_id")
-    ))
+        CREATE TABLE IF NOT EXISTS auth_events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            event_time TEXT,
+            machine_id TEXT,
+            user_id TEXT,
+            event_id INTEGER,
+            event_category TEXT
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS alerts (
+            alert_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            alert_time TEXT,
+            machine_id TEXT,
+            user_id TEXT,
+            alert_level TEXT,
+            alert_reason TEXT,
+            confidence TEXT
+        )
+    """)
 
     conn.commit()
     conn.close()
 
 
 def insert_events(events):
+    """
+    Inserts parsed authentication events into the database.
+    """
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
     for event in events:
-        insert_event(event)
+        cursor.execute("""
+            INSERT INTO auth_events
+            (event_time, machine_id, user_id, event_id, event_category)
+            VALUES (?, ?, ?, ?, ?)
+        """, (
+            event["event_time"],
+            event["machine_id"],
+            event["user_id"],
+            event["event_id"],
+            event["event_category"]
+        ))
+
+    conn.commit()
+    conn.close()

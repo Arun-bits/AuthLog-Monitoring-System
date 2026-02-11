@@ -7,6 +7,7 @@ from src.db_manager import initialize_database, insert_events
 from src.config import STREAM_INTERVAL
 
 
+
 def start_pipeline():
     print("[INFO] Initializing database...")
     initialize_database()
@@ -23,7 +24,7 @@ def start_pipeline():
 
             for event in parsed_logs:
                 print(
-                    f"[{event['timestamp']}] "
+                    f"[{event['event_time']}] "
                     f"{event['event_category']} | "
                     f"USER={event.get('username')} | "
                     f"MACHINE={event['machine_id']}"
@@ -32,6 +33,6 @@ def start_pipeline():
         time.sleep(STREAM_INTERVAL)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  
     start_pipeline()
 

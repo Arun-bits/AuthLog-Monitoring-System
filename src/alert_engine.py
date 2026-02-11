@@ -1,26 +1,29 @@
-# src/alert_engine.py
+from win10toast import ToastNotifier
+from src.rule_engine import detect_three_failures_in_window
+from src.risk_scoring import calculate_ml_risk_score
 
-import sqlite3
-from datetime import datetime
-from pathlib import Path
+def run_alert_engine():
+    print("[INFO] Alert engine started")
 
-DB_PATH = Path("database/auth_logs.db")
+    failure_detected = detect_three_failures_in_window()
+    risk_score = calculate_ml_risk_score()
 
-def generate_alert(machine, level, reason):
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
+    print("[INFO] Failure detected:", failure_detected)
+    print("[INFO] Risk score:", risk_score)
 
-    cursor.execute("""
-        INSERT INTO alerts (alert_time, machine_id, alert_level, alert_reason)
-        VALUES (?, ?, ?, ?)
-    """, (
-        datetime.now().isoformat(),
-        machine,
-        level,
-        reason
-    ))
+    # 🔥 FINAL TRIGGER LOGIC
+    if failure_detected or risk_score >= 60:
+        toaster = ToastNotifier()
+        toaster.show_toast(
+            "⚠️ Security Alert",
+            f"Suspicious authentication activity detected\n"
+            f"Risk Score: {risk_score}",
+            duration=8,
+            threaded=True
+        )
+        print("[INFO] Alert triggered")
+    else:
+        print("[INFO] No alert condition met")
 
-    conn.commit()
-    conn.close()
-
-    print(f"🚨 ALERT [{level}] | {machine} | {reason}")
+if __name__ == "__main__":
+    run_alert_engine()
