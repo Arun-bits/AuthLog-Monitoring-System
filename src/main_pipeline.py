@@ -24,11 +24,11 @@ def start_pipeline():
                 print(
                     f"[{event['event_time']}] "
                     f"{event['event_category']} | "
-                    f"USER={event.get('username')} | "
+                    f"USER={event.get('user_id')} | "
                     f"MACHINE={event['machine_id']}"
                 )
 
-            # 🔥 Run alert engine after new logs are inserted
+            # Run alert engine after new logs are inserted
             run_alert_engine()
 
         time.sleep(STREAM_INTERVAL)
