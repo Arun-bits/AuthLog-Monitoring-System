@@ -1,5 +1,3 @@
-# src/db_manager.py
-
 import sqlite3
 from src.config import DB_PATH
 

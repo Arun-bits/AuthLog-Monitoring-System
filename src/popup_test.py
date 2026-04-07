@@ -1,8 +1,12 @@
-import ctypes
+from win10toast import ToastNotifier
+import time
 
-ctypes.windll.user32.MessageBoxW(
-    0,
-    "POP-UP SYSTEM WORKS",
-    "TEST",
-    0x10
+toaster = ToastNotifier()
+toaster.show_toast(
+    "Test Notification",
+    "Popup is working successfully!",
+    duration=5,
+    threaded=True
 )
+
+time.sleep(6)
